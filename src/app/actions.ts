@@ -173,3 +173,90 @@ export async function permanentDeleteItem(id: string) {
   revalidatePath('/inventory/archive');
   return { success: true };
 }
+
+export async function addMenuItem(
+  name: string,
+  description: string,
+  price: number,
+  ingredients: { inventory_item_id: string; quantity_required: number }[]
+) {
+  // 1. Insert Menu Item
+  const { data: menuItem, error: menuError } = await supabase
+    .from('menu_items')
+    .insert({ name, description, price })
+    .select('id')
+    .single();
+
+  if (menuError || !menuItem) {
+    return { success: false, error: menuError?.message || 'Failed to create menu item' };
+  }
+
+  // 2. Insert Recipes
+  if (ingredients.length > 0) {
+    const payload = ingredients.map(ing => ({
+      menu_item_id: menuItem.id,
+      inventory_item_id: ing.inventory_item_id,
+      quantity_required: ing.quantity_required,
+    }));
+
+    const { error: recipeError } = await supabase.from('menu_recipes').insert(payload);
+    if (recipeError) {
+      // rollback manually just in case
+      await supabase.from('menu_items').delete().eq('id', menuItem.id);
+      return { success: false, error: recipeError.message };
+    }
+  }
+
+  revalidatePath('/menu');
+  return { success: true };
+}
+
+export async function logMenuSale(menuItemId: string) {
+  // 1. Fetch the recipe for this menu item
+  const { data: recipes, error: fetchError } = await supabase
+    .from('menu_recipes')
+    .select('inventory_item_id, quantity_required')
+    .eq('menu_item_id', menuItemId);
+
+  if (fetchError) return { success: false, error: fetchError.message };
+  if (!recipes || recipes.length === 0) return { success: false, error: 'No recipe items found' };
+
+  // 2. Reduce stock and record transactions for each ingredient
+  // Note: Parallelizing with Promise.all
+  try {
+    await Promise.all(recipes.map(async (recipe) => {
+      // Fetch current stock
+      const { data: item } = await supabase
+        .from('items')
+        .select('current_stock')
+        .eq('id', recipe.inventory_item_id)
+        .single();
+
+      if (!item) return; // Skip if item mysteriously deleted
+
+      const newStock = item.current_stock - recipe.quantity_required;
+
+      // Update Stock
+      await supabase
+        .from('items')
+        .update({ current_stock: newStock, updated_at: new Date().toISOString() })
+        .eq('id', recipe.inventory_item_id);
+
+      // Record out transaction
+      await supabase
+        .from('inventory_transactions')
+        .insert({
+          item_id: recipe.inventory_item_id,
+          type: 'out',
+          quantity: recipe.quantity_required,
+          notes: 'POS Recipe Deduction'
+        });
+    }));
+
+    revalidatePath('/inventory');
+    revalidatePath('/analytics');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

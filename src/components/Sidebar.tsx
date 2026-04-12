@@ -41,9 +41,19 @@ export default function Sidebar({ isOpen, setIsOpen }: { isOpen?: boolean, setIs
             <span className="font-medium text-sm">Analytics & Alerts</span>
           </Link>
           
+          <div className="mt-8 mb-2 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Operations</div>
+          <Link href="/menu" onClick={() => setIsOpen?.(false)} className="flex flex-row items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80 transition-all duration-200 group">
+            <LayoutDashboard className="w-5 h-5 text-slate-400 group-hover:text-indigo-400 transition-colors" />
+            <span className="font-medium text-sm">Menu Engineering</span>
+          </Link>
+          <Link href="/sales" onClick={() => setIsOpen?.(false)} className="flex flex-row items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80 transition-all duration-200 group">
+            <Sparkles className="w-5 h-5 text-indigo-400 group-hover:text-indigo-300 transition-colors" />
+            <span className="font-medium text-sm">Virtual POS</span>
+          </Link>
+
           <div className="mt-8 mb-2 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Intelligence</div>
           <Link href="/reorders" onClick={() => setIsOpen?.(false)} className="flex flex-row items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80 transition-all duration-200 group">
-            <Sparkles className="w-5 h-5 text-indigo-400 group-hover:text-indigo-300 transition-colors" />
+            <Package className="w-5 h-5 text-indigo-400 group-hover:text-indigo-300 transition-colors" />
             <span className="font-medium text-sm">Suggested Orders</span>
           </Link>
           <Link href="/assistant" onClick={() => setIsOpen?.(false)} className="flex flex-row items-center space-x-3 px-3 py-2.5 rounded-lg text-indigo-100 bg-indigo-500/10 hover:bg-indigo-500/20 shadow-inner border border-indigo-500/20 transition-all duration-200 group relative">
