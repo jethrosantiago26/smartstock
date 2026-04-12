@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Plus, Search, Trash2, UtensilsCrossed, ArrowRight, DollarSign } from 'lucide-react';
-import { addMenuItem } from '@/app/actions';
+import { Plus, Search, Trash2, UtensilsCrossed, ArrowRight, DollarSign, Edit, Archive } from 'lucide-react';
+import { addMenuItem, updateMenuItem, archiveMenuItem } from '@/app/actions';
 import { Database } from '@/types/supabase';
 
 type Item = Database['public']['Tables']['items']['Row'];
@@ -21,6 +21,7 @@ export default function MenuEngineeringPage() {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [ingredients, setIngredients] = useState<{ inventory_item_id: string, quantity_required: string }[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -35,6 +36,7 @@ export default function MenuEngineeringPage() {
             items (name, unit, sku)
           )
         `)
+        .eq('is_archived', false)
         .order('created_at', { ascending: false });
 
       // Fetch active inventory items for the dropdown
@@ -65,6 +67,38 @@ export default function MenuEngineeringPage() {
     setIngredients(ingredients.filter((_, i) => i !== index));
   };
 
+  const handleCancel = () => {
+    setShowAddForm(false);
+    setEditingId(null);
+    setName('');
+    setDescription('');
+    setPrice('');
+    setIngredients([]);
+  };
+
+  const handleEditClick = (item: any) => {
+    setEditingId(item.id);
+    setName(item.name);
+    setDescription(item.description || '');
+    setPrice(item.price.toString());
+    setIngredients(
+      item.menu_recipes.map((r: any) => ({
+        inventory_item_id: r.inventory_item_id,
+        quantity_required: r.quantity_required.toString()
+      }))
+    );
+    setShowAddForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleArchive = async (id: string) => {
+    if (confirm('Are you sure you want to archive this menu item? It will be removed from the POS screen.')) {
+      setLoading(true);
+      await archiveMenuItem(id);
+      window.location.reload();
+    }
+  };
+
   const handleSaveMenu = async () => {
     if (!name || !price) return alert('Name and Price are required.');
     
@@ -74,7 +108,12 @@ export default function MenuEngineeringPage() {
       .map(i => ({ inventory_item_id: i.inventory_item_id, quantity_required: Number(i.quantity_required) }));
 
     setSubmitting(true);
-    const res = await addMenuItem(name, description, Number(price), validIngredients);
+    let res;
+    if (editingId) {
+      res = await updateMenuItem(editingId, name, description, Number(price), validIngredients);
+    } else {
+      res = await addMenuItem(name, description, Number(price), validIngredients);
+    }
     
     if (res.success) {
       window.location.reload(); // Quick refresh to grab new data
@@ -105,7 +144,7 @@ export default function MenuEngineeringPage() {
 
       {showAddForm && (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl animate-in fade-in slide-in-from-top-4 duration-300">
-          <h3 className="text-lg font-semibold text-white mb-4">Create New Menu Item</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">{editingId ? 'Edit Menu Item' : 'Create New Menu Item'}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div className="space-y-4">
               <div>
@@ -183,7 +222,7 @@ export default function MenuEngineeringPage() {
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
             <button 
-              onClick={() => setShowAddForm(false)}
+              onClick={handleCancel}
               className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
             >
               Cancel
@@ -208,8 +247,16 @@ export default function MenuEngineeringPage() {
                 <h3 className="text-lg font-bold text-white">{item.name}</h3>
                 <p className="text-xs text-slate-400 mt-1 max-w-sm">{item.description || 'No description'}</p>
               </div>
-              <div className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1 rounded-full text-sm font-bold">
-                ${item.price}
+              <div className="flex items-center gap-2">
+                <button onClick={() => handleEditClick(item)} className="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-slate-800 rounded transition-colors">
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button onClick={() => handleArchive(item.id)} className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded transition-colors mr-2">
+                  <Archive className="w-4 h-4" />
+                </button>
+                <div className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1 rounded-full text-sm font-bold">
+                  ${item.price}
+                </div>
               </div>
             </div>
             

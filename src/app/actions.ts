@@ -260,3 +260,49 @@ export async function logMenuSale(menuItemId: string) {
     return { success: false, error: error.message };
   }
 }
+
+export async function updateMenuItem(
+  id: string,
+  name: string,
+  description: string,
+  price: number,
+  ingredients: { inventory_item_id: string; quantity_required: number }[]
+) {
+  // Update parent item
+  const { error: menuError } = await supabase
+    .from('menu_items')
+    .update({ name, description, price })
+    .eq('id', id);
+
+  if (menuError) return { success: false, error: menuError.message };
+
+  // Wipe old recipes
+  await supabase.from('menu_recipes').delete().eq('menu_item_id', id);
+
+  // Insert new recipes
+  if (ingredients.length > 0) {
+    const payload = ingredients.map(ing => ({
+      menu_item_id: id,
+      inventory_item_id: ing.inventory_item_id,
+      quantity_required: ing.quantity_required,
+    }));
+    await supabase.from('menu_recipes').insert(payload);
+  }
+
+  revalidatePath('/menu');
+  revalidatePath('/sales');
+  return { success: true };
+}
+
+export async function archiveMenuItem(id: string) {
+  const { error } = await supabase
+    .from('menu_items')
+    .update({ is_archived: true })
+    .eq('id', id);
+
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath('/menu');
+  revalidatePath('/sales');
+  return { success: true };
+}
