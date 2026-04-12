@@ -80,6 +80,7 @@ export type Database = {
           created_at: string | null
           current_stock: number
           id: string
+          is_archived: boolean
           minimum_stock: number
           name: string
           sku: string
@@ -92,6 +93,7 @@ export type Database = {
           created_at?: string | null
           current_stock?: number
           id?: string
+          is_archived?: boolean
           minimum_stock?: number
           name: string
           sku: string
@@ -104,6 +106,7 @@ export type Database = {
           created_at?: string | null
           current_stock?: number
           id?: string
+          is_archived?: boolean
           minimum_stock?: number
           name?: string
           sku?: string

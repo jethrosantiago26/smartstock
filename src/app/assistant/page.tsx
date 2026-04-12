@@ -61,9 +61,13 @@ export default function AssistantPage() {
           });
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      setMessages(curr => [...curr, { id: Date.now().toString(), role: 'assistant', content: 'Sorry, I encountered an error. Please ensure GEMINI_API_KEY is configured in your .env.local file.' }]);
+      const isOverloaded = error.message?.includes('503') || error.message?.toLowerCase().includes('demand');
+      const errorMsg = isOverloaded 
+        ? 'The AI model is currently experiencing high demand. Please try asking again in a moment.' 
+        : 'Sorry, I encountered an error communicating with the API. Please ensure GEMINI_API_KEY is configured correctly.';
+      setMessages(curr => [...curr, { id: Date.now().toString(), role: 'assistant', content: errorMsg }]);
     } finally {
       setIsLoading(false);
     }
