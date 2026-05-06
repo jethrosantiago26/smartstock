@@ -2,16 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Plus, Search, Trash2, UtensilsCrossed, ArrowRight, DollarSign, Edit, Archive } from 'lucide-react';
+import { Plus, Trash2, UtensilsCrossed, ArrowRight, DollarSign, Edit, Archive } from 'lucide-react';
 import { addMenuItem, updateMenuItem, archiveMenuItem } from '@/app/actions';
 import { Database } from '@/types/supabase';
 
 type Item = Database['public']['Tables']['items']['Row'];
 type MenuItem = Database['public']['Tables']['menu_items']['Row'];
 type Recipe = Database['public']['Tables']['menu_recipes']['Row'] & { items: Pick<Item, 'name' | 'unit' | 'sku'> };
+type MenuItemWithRecipes = MenuItem & { menu_recipes: Recipe[] };
 
 export default function MenuEngineeringPage() {
-  const [menuItems, setMenuItems] = useState<(MenuItem & { menu_recipes: Recipe[] })[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItemWithRecipes[]>([]);
   const [inventoryItems, setInventoryItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -46,7 +47,7 @@ export default function MenuEngineeringPage() {
         .eq('is_archived', false)
         .order('name');
 
-      if (menuData) setMenuItems(menuData as any);
+      if (menuData) setMenuItems(menuData as MenuItemWithRecipes[]);
       if (invData) setInventoryItems(invData);
       setLoading(false);
     }
@@ -76,15 +77,15 @@ export default function MenuEngineeringPage() {
     setIngredients([]);
   };
 
-  const handleEditClick = (item: any) => {
+  const handleEditClick = (item: MenuItemWithRecipes) => {
     setEditingId(item.id);
     setName(item.name);
     setDescription(item.description || '');
     setPrice(item.price.toString());
     setIngredients(
-      item.menu_recipes.map((r: any) => ({
-        inventory_item_id: r.inventory_item_id,
-        quantity_required: r.quantity_required.toString()
+      item.menu_recipes.map((recipe) => ({
+        inventory_item_id: recipe.inventory_item_id,
+        quantity_required: recipe.quantity_required.toString()
       }))
     );
     setShowAddForm(true);
@@ -215,7 +216,7 @@ export default function MenuEngineeringPage() {
                     </button>
                   </div>
                 ))}
-                {ingredients.length === 0 && <p className="text-xs text-slate-500 italic text-center py-4">No ingredients added. This item won't affect inventory.</p>}
+                {ingredients.length === 0 && <p className="text-xs text-slate-500 italic text-center py-4">No ingredients added. This item won&apos;t affect inventory.</p>}
               </div>
 
             </div>
@@ -266,7 +267,7 @@ export default function MenuEngineeringPage() {
               </h4>
               <div className="bg-slate-950 rounded-xl p-3 border border-slate-800/50 space-y-2">
                 {item.menu_recipes && item.menu_recipes.length > 0 ? (
-                  item.menu_recipes.map((rec: any) => (
+                  item.menu_recipes.map((rec) => (
                     <div key={rec.id} className="flex justify-between items-center text-sm">
                       <span className="text-slate-300 font-medium">{rec.items.name}</span>
                       <span className="text-slate-500 font-mono text-xs">{rec.quantity_required} x {rec.items.unit}</span>

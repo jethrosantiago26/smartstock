@@ -1,6 +1,6 @@
 'use client'
 
-import { Search, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
 
 export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   return (
@@ -12,14 +12,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
         >
           <Menu className="w-5 h-5" />
         </button>
-        <div className="hidden md:flex relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="Search inventory, suggest reorders..." 
-            className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-900 border-none rounded-full text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-800 outline-none transition-all dark:text-slate-200 placeholder-slate-500 dark:placeholder-slate-400 shadow-inner"
-          />
-        </div>
+        <div className="flex-1" />
       </div>
       <div className="flex items-center space-x-3 sm:space-x-4 pl-4 relative">
         {/* Placeholder for future header items on the right side if needed */}

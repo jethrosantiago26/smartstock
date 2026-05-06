@@ -105,14 +105,16 @@ export default function InventoryTable({ initialItems }: { initialItems: Item[] 
         </div>
       )}
       <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="relative max-w-sm w-full">
-          <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <div className="relative max-w-sm w-full group">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+            <Search className="w-4 h-4" />
+          </div>
           <input 
             type="text" 
             placeholder="Search SKUs or item names..." 
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-950 border border-transparent focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900 rounded-lg text-sm outline-none transition-all dark:text-slate-200 placeholder-slate-400"
+            className="w-full pl-14 pr-4 py-2.5 bg-white/70 dark:bg-slate-950/60 border border-slate-200/70 dark:border-slate-800/80 rounded-xl text-sm outline-none transition-all dark:text-slate-200 placeholder-slate-400 shadow-sm focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900"
           />
         </div>
 

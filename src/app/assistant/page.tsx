@@ -7,7 +7,7 @@ type Message = { id: string, role: 'user' | 'assistant', content: string };
 
 export default function AssistantPage() {
   const [messages, setMessages] = useState<Message[]>([
-    { id: '1', role: 'assistant', content: 'Hello! I am SmartStock AI. I have full access to your real-time database. You can ask me things like "What do I need to reorder?", "Which items cost the most?", or "Analyze our recent transaction history."' }
+    { id: '1', role: 'assistant', content: 'Hello! I can help with inventory, reorders, sales, menu items, and transaction analysis. I do not handle unrelated or low-value requests.' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +39,10 @@ export default function AssistantPage() {
         })
       });
 
-      if (!res.ok) throw new Error('Failed to fetch response');
+      if (!res.ok) {
+        const errorPayload = await res.json().catch(() => null);
+        throw new Error(errorPayload?.error || `Failed to fetch response (${res.status})`);
+      }
       
       if (res.body) {
         const reader = res.body.getReader();
@@ -64,8 +67,11 @@ export default function AssistantPage() {
     } catch (error: any) {
       console.error(error);
       const isOverloaded = error.message?.includes('503') || error.message?.toLowerCase().includes('demand');
+      const isRateLimited = error.message?.includes('429') || error.message?.toLowerCase().includes('wait');
       const errorMsg = isOverloaded 
         ? 'The AI model is currently experiencing high demand. Please try asking again in a moment.' 
+        : isRateLimited
+          ? error.message
         : 'Sorry, I encountered an error communicating with the API. Please ensure GEMINI_API_KEY is configured correctly.';
       setMessages(curr => [...curr, { id: Date.now().toString(), role: 'assistant', content: errorMsg }]);
     } finally {
@@ -82,7 +88,7 @@ export default function AssistantPage() {
           </div>
           <div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">SmartStock AI</h2>
-            <p className="text-xs font-medium text-slate-500 dark:text-indigo-400">Powered by Google Gemini</p>
+            <p className="text-xs font-medium text-slate-500 dark:text-indigo-400">Inventory-focused, on-demand assistance</p>
           </div>
         </div>
         
@@ -129,7 +135,7 @@ export default function AssistantPage() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about your inventory, anomalies, or ordering suggestions..."
+              placeholder="Ask about inventory, reorders, sales, or menu items..."
               disabled={isLoading}
               className="w-full pl-5 pr-14 py-3.5 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all dark:text-slate-200 placeholder-slate-500 disabled:opacity-50"
             />

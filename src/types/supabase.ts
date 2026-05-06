@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_usage_daily: {
+        Row: {
+          usage_date: string
+          prompt_tokens: number
+          completion_tokens: number
+          total_tokens: number
+          updated_at: string | null
+        }
+        Insert: {
+          usage_date: string
+          prompt_tokens?: number
+          completion_tokens?: number
+          total_tokens?: number
+          updated_at?: string | null
+        }
+        Update: {
+          usage_date?: string
+          prompt_tokens?: number
+          completion_tokens?: number
+          total_tokens?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      app_settings: {
+        Row: {
+          id: number
+          low_stock_multiplier: number
+          default_unit_type: string
+          ai_enabled: boolean
+          ai_daily_token_limit: number
+          ai_overage_behavior: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          low_stock_multiplier?: number
+          default_unit_type?: string
+          ai_enabled?: boolean
+          ai_daily_token_limit?: number
+          ai_overage_behavior?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          low_stock_multiplier?: number
+          default_unit_type?: string
+          ai_enabled?: boolean
+          ai_daily_token_limit?: number
+          ai_overage_behavior?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string | null

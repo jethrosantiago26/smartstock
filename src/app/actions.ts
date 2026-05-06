@@ -3,6 +3,7 @@
 import { supabase } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
 
+// Adjust item stock and write a matching inventory transaction.
 export async function adjustStock(
   itemId: string, 
   currentStock: number, 
@@ -44,6 +45,7 @@ export async function adjustStock(
   return { success: true };
 }
 
+// Create a new inventory item and auto-generate its SKU.
 export async function addItem(formData: FormData) {
   const name = formData.get('name') as string;
   const current_stock = Number(formData.get('current_stock')) || 0;
@@ -90,6 +92,7 @@ export async function addItem(formData: FormData) {
   return { success: true };
 }
 
+// Soft-archive an item so it is hidden from active inventory.
 export async function archiveItem(id: string) {
   const { error } = await supabase.from('items').update({
     is_archived: true,
@@ -105,6 +108,7 @@ export async function archiveItem(id: string) {
   return { success: true };
 }
 
+// Update inventory item fields based on the edit form.
 export async function updateItem(id: string, formData: FormData) {
   const sku = formData.get('sku') as string;
   const name = formData.get('name') as string;
@@ -132,6 +136,7 @@ export async function updateItem(id: string, formData: FormData) {
   return { success: true };
 }
 
+// Apply reorder suggestions by incrementing stock and logging transactions.
 export async function acceptReorders(suggestions: { itemId: string, suggestedQuantity: number }[]) {
   for (const item of suggestions) {
     const { data: current } = await supabase.from('items').select('current_stock').eq('id', item.itemId).single();
@@ -151,6 +156,7 @@ export async function acceptReorders(suggestions: { itemId: string, suggestedQua
   return { success: true };
 }
 
+// Restore an archived item back into active inventory.
 export async function restoreItem(id: string) {
   const { error } = await supabase.from('items').update({
     is_archived: false,
@@ -164,6 +170,7 @@ export async function restoreItem(id: string) {
   return { success: true };
 }
 
+// Permanently delete an archived item from the database.
 export async function permanentDeleteItem(id: string) {
   const { error } = await supabase.from('items').delete().eq('id', id);
 
@@ -174,6 +181,7 @@ export async function permanentDeleteItem(id: string) {
   return { success: true };
 }
 
+// Create a menu item and its ingredient recipe rows.
 export async function addMenuItem(
   name: string,
   description: string,
@@ -211,6 +219,7 @@ export async function addMenuItem(
   return { success: true };
 }
 
+// Deduct ingredient stock based on a menu sale and log transactions.
 export async function logMenuSale(menuItemId: string) {
   // 1. Fetch the recipe for this menu item
   const { data: recipes, error: fetchError } = await supabase
@@ -256,11 +265,13 @@ export async function logMenuSale(menuItemId: string) {
     revalidatePath('/inventory');
     revalidatePath('/analytics');
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return { success: false, error: message };
   }
 }
 
+// Update a menu item and replace its recipe list.
 export async function updateMenuItem(
   id: string,
   name: string,
@@ -294,6 +305,7 @@ export async function updateMenuItem(
   return { success: true };
 }
 
+// Archive a menu item so it no longer appears in active menus.
 export async function archiveMenuItem(id: string) {
   const { error } = await supabase
     .from('menu_items')

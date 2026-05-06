@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Sparkles, ShoppingCart, Loader2, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { acceptReorders } from '@/app/actions';
@@ -16,22 +16,30 @@ type Suggestion = {
 
 export default function ReordersPage() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [error, setError] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  useEffect(() => {
+  const loadSuggestions = async () => {
+    setLoading(true);
+    setError('');
     fetch('/api/reorders')
       .then(res => res.json())
       .then(data => {
         if (data.error) throw new Error(data.error);
         setSuggestions(data);
+        setHasLoaded(true);
       })
-      .catch(err => setError(err.message))
+      .catch(err => {
+        setSuggestions([]);
+        setHasLoaded(true);
+        setError(err.message);
+      })
       .finally(() => setLoading(false));
-  }, []);
+  };
 
   const totalCost = suggestions.reduce((sum, s) => sum + s.estimatedCost, 0);
 
@@ -50,32 +58,46 @@ export default function ReordersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2">
         <div>
           <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 flex items-center">
-            AI Reorder Suggestions <Sparkles className="w-6 h-6 ml-3 text-indigo-500" />
+            Reorder Suggestions <Sparkles className="w-6 h-6 ml-3 text-indigo-500" />
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Smart recommendations based on current inventory deficits and par levels.</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Generate replenishment suggestions on demand to avoid unnecessary background AI usage.</p>
         </div>
+        <button
+          onClick={loadSuggestions}
+          disabled={loading}
+          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-sm font-medium rounded-lg shadow-sm shadow-indigo-500/30 transition-all duration-200"
+        >
+          {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+          {hasLoaded ? 'Refresh Suggestions' : 'Generate Suggestions'}
+        </button>
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden min-h-[400px]">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-[400px] text-indigo-500">
             <Loader2 className="w-10 h-10 animate-spin mb-4" />
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 animate-pulse">Analyzing inventory levels...</p>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 animate-pulse">Generating reorder suggestions...</p>
           </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center p-8 text-center text-red-500 h-[400px]">
             <AlertCircle className="w-12 h-12 mb-4 text-red-400" />
             <p className="font-semibold text-lg">Failed to fetch suggestions</p>
-            <p className="text-sm opacity-80 mt-2 max-w-md">{error.includes('503') || error.toLowerCase().includes('demand') ? "The AI model is currently experiencing high demand. Please wait a moment and try again." : error}</p>
-            {!error.includes('503') && !error.toLowerCase().includes('demand') && (
-              <p className="text-xs opacity-60 mt-4">(Ensure GEMINI_API_KEY is configured in .env.local)</p>
-            )}
+            <p className="text-sm opacity-80 mt-2 max-w-md">{error.includes('503') || error.toLowerCase().includes('demand') ? "The reorder service is temporarily unavailable. Please wait a moment and try again." : error}</p>
+            <p className="text-xs opacity-60 mt-4">(Suggestions are now generated locally, so this usually indicates a database or network issue.)</p>
             <button 
-              onClick={() => window.location.reload()} 
+              onClick={loadSuggestions} 
               className="mt-6 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors font-medium text-sm"
             >
               Try Again
             </button>
+          </div>
+        ) : !hasLoaded ? (
+          <div className="flex flex-col items-center justify-center h-[400px] text-slate-500 dark:text-slate-400 px-6 text-center">
+            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+              <Sparkles className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+            </div>
+            <p className="text-lg font-medium text-slate-900 dark:text-slate-200">No Suggestions Generated Yet</p>
+            <p className="text-sm mt-1 max-w-md">Click Generate Suggestions to compute reorder quantities when you are ready.</p>
           </div>
         ) : suggestions.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-[400px] text-slate-500 dark:text-slate-400">
@@ -143,9 +165,9 @@ export default function ReordersPage() {
               <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-4">
                 <ShoppingCart className="w-8 h-8" />
               </div>
-              <h3 className="font-bold text-xl text-slate-900 dark:text-white mb-2">Process AI Suggestions?</h3>
+              <h3 className="font-bold text-xl text-slate-900 dark:text-white mb-2">Process Suggestions?</h3>
               <p className="text-slate-500 dark:text-slate-400 mb-6">
-                This will automatically add the suggested stock into your system for <strong>{suggestions.length} items</strong>.
+                This will add the suggested stock into your system for <strong>{suggestions.length} items</strong>.
                 Total Estimated Value: <strong>${totalCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong>
               </p>
               
@@ -179,7 +201,7 @@ export default function ReordersPage() {
               </div>
               <h3 className="font-bold text-xl text-slate-900 dark:text-white mb-2">Orders Processed!</h3>
               <p className="text-slate-500 dark:text-slate-400 mb-6">
-                Inventory levels have been successfully updated based on the AI recommendations.
+                Inventory levels have been successfully updated based on the suggested reorder quantities.
               </p>
               
               <Link href="/inventory" className="block w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors text-center">
