@@ -64,14 +64,15 @@ export default function AssistantPage() {
           });
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      const isOverloaded = error.message?.includes('503') || error.message?.toLowerCase().includes('demand');
-      const isRateLimited = error.message?.includes('429') || error.message?.toLowerCase().includes('wait');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const isOverloaded = errorMessage.includes('503') || errorMessage.toLowerCase().includes('demand');
+      const isRateLimited = errorMessage.includes('429') || errorMessage.toLowerCase().includes('wait');
       const errorMsg = isOverloaded 
         ? 'The AI model is currently experiencing high demand. Please try asking again in a moment.' 
         : isRateLimited
-          ? error.message
+          ? errorMessage
         : 'Sorry, I encountered an error communicating with the API. Please ensure GEMINI_API_KEY is configured correctly.';
       setMessages(curr => [...curr, { id: Date.now().toString(), role: 'assistant', content: errorMsg }]);
     } finally {

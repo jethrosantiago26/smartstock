@@ -36,6 +36,11 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local helper scripts
+fetch_supabase.js
+push-env.js
+mcp-server.mjs
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
