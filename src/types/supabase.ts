@@ -251,7 +251,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      transaction_type: "in" | "out" | "adjustment" | "waste"
+      transaction_type: "in" | "out" | "adjustment"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -379,7 +379,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      transaction_type: ["in", "out", "adjustment", "waste"],
+      transaction_type: ["in", "out", "adjustment"],
     },
   },
 } as const

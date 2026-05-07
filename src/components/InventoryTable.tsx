@@ -18,7 +18,7 @@ interface Item {
 export default function InventoryTable({ initialItems }: { initialItems: Item[] }) {
   const [items, setItems] = useState<Item[]>(initialItems);
   const [search, setSearch] = useState('');
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);

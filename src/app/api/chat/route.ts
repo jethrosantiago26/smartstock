@@ -108,7 +108,6 @@ function isInventoryQuestion(message: string) {
     'menu',
     'cost',
     'costs',
-    'waste',
     'analytics',
     'sku',
     'ingredient',

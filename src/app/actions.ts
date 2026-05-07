@@ -8,7 +8,7 @@ export async function adjustStock(
   itemId: string, 
   currentStock: number, 
   quantityChange: number, 
-  type: 'in' | 'out' | 'adjustment' | 'waste', 
+  type: 'in' | 'out' | 'adjustment', 
   notes?: string
 ) {
   const newStock = currentStock + quantityChange;
